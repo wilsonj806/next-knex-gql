@@ -1,0 +1,19 @@
+# NOTE WARNING: Config not fit for production
+version: "3.3"
+services:
+  nextjs:
+    build:
+      context: .
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+  postgres:
+    container_name: next-knex-sql
+    image: postgres
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
