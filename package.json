@@ -8,6 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "apollo-server-micro": "^2.15.1",
+    "dotenv": "^8.2.0",
+    "graphql": "^14.7.0",
+    "knex": "^0.21.1",
     "next": "9.4.4",
     "react": "16.13.1",
     "react-dom": "16.13.1"
