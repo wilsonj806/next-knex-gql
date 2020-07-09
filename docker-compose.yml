@@ -7,13 +7,13 @@ services:
     volumes:
       - .:/usr/src/app
     env_file:
-      - .env
+      - .env.local
     ports:
       - 3000:3000
   postgres:
     container_name: next-knex-sql
     image: postgres
     env_file:
-      - .env
+      - .env.local
     ports:
       - 5432:5432
