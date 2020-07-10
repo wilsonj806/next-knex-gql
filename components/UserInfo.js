@@ -19,10 +19,8 @@ const UserInfo = () => {
   } else if (error) {
     return <p>error</p>
   }
-  console.log(data)
   return (
     <div>
-      <h1>These are users</h1>
       { data.users.map(user => <p key={user.firstName}>{user.firstName}</p>) }
     </div>
   )
