@@ -11,50 +11,113 @@ const knexClient = knex({
   }
 });
 
-knexClient.schema.hasTable('users').then(exists => {
-  if (!exists) {
-    knexClient.createTable('users', (table) => {
-      table.increments('id')
-      table.string('firstName')
-    })
-    .then(() => knexClient('users').insert([
-      {firstName: 'Wilson'},
-      {firstName: 'Calvin'}
-    ]))
-  } else {
-    return;
-  }
-})
-.catch(err => console.log(err));
+// knexClient.schema.hasTable('users').then(exists => {
+//   if (!exists) {
+//     knexClient.createTable('users', (table) => {
+//       table.increments('id')
+//       table.string('firstName')
+//     })
+//     .then(() => knexClient('users').insert([
+//       {firstName: 'Wilson'},
+//       {firstName: 'Calvin'}
+//     ]))
+//   } else {
+//     return;
+//   }
+// })
+// .catch(err => console.log(err));
 
 
 
 const typeDefs = gql`
   type Query {
     users: [User!]!
-  },
+    albums(first: Int = 25, skip: Int=0): [Album!]!
+  }
+
+  type Artist {
+    id: Int!
+    name: String!
+    albums(first: Int = 25, skip: Int = 0): [Album!]!
+  }
+
   type User {
     id: Int!
     firstName: String
   }
+
+  type Album {
+    id: Int!
+    name: String!
+    year: Int!
+    artist: Artist!
+  }
 `
 
-// TODO integrate Knex into this for resolving shit
 const resolvers = {
   Query: {
-    async users(parent, args, context, resolveInfo) {
-      try {
-        const res  = await knexClient.select('*').from('users')
-        return res;
-      } catch (err) {
-        console.log(err)
-      }
+    users: (parent, args, context, resolveInfo) => {
+      // try {
+        return knexClient.select('*').from('users')
+      // } catch (err) {
+      //   console.log(err)
+      // }
     },
+    albums: (parent, args, context) => {
+      // try {
+        return knexClient
+        .select('*')
+        .from('albums')
+        .orderBy('year', 'asc')
+        .limit(Math.min(args.first, 50))
+        .offset(args.skip)
+      // } catch (err) {
+        // console.log(err)
+      // }
+    }
   },
+
+  Album: {
+    id: (album, args, context) => album.id,
+    artist: (album, args, context) => {
+      // try {
+      return knexClient
+        .select('*')
+        .from('artists')
+        .where({ id: album.artist_id})
+        .first();
+      // } catch (err) {
+        // console.log(err)
+      // }
+
+    }
+  },
+
+  Artist: {
+    id: (artist, _args, context) => artist.id,
+    albums: (artist, args, context) => {
+      // try {
+      return knexClient
+        .select('*')
+        .from('albums')
+        .where({ artist_id: artist.id })
+        .orderBy('year', 'asc')
+        .limit(Math.min(args.first, 50))
+        .offset(args.skip)
+      // } catch (err) {
+        // console.log(err)
+      // }
+
+    }
+  }
 }
 
 
-const apolloServer = new ApolloServer({ typeDefs, resolvers })
+const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: () => ({})
+})
 
 export const config = {
   api: { bodyParser: false }

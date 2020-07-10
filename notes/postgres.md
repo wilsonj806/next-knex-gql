@@ -12,10 +12,21 @@ Here's a couple of handy commands for Postgres.
 - `\dt` to list tables in a database
 - `\d my_table_name` to list table columns
 
+Here's some quick Postgres queries as a reference:
+- Renaming a column:
+```sql
+  ALTER table_name RENAME COLUMN col_name TO new_col_name;
+```
+- Inserting a row:
+```sql
+  INSERT INTO table_name VALUES ('col_1 val', 'col_2 val',...'col_n val');
+```
+
+
 ## Diffs to MySQL
 Instead of `AUTO_INCREMENT` we use `SERIAL` for auto incrementing data types.
 ```sql
-  create table albums (
+  CREATE TABLE albums (
     id serial,
     name varchar(255)
   )
