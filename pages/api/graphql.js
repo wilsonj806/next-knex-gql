@@ -11,14 +11,20 @@ const knexClient = knex({
   }
 });
 
-// FIXME use hasTable instead of createTableIfNotExists
-knexClient.schema.createTableIfNotExists('users', (table) => {
-  table.increments('id')
-  table.string('firstName')
-}).then(() => knexClient('users').insert([
-  {firstName: 'Wilson'},
-  {firstName: 'Calvin'}
-]))
+knexClient.schema.hasTable('users').then(exists => {
+  if (!exists) {
+    knexClient.createTable('users', (table) => {
+      table.increments('id')
+      table.string('firstName')
+    })
+    .then(() => knexClient('users').insert([
+      {firstName: 'Wilson'},
+      {firstName: 'Calvin'}
+    ]))
+  } else {
+    return;
+  }
+})
 .catch(err => console.log(err));
 
 
@@ -36,15 +42,23 @@ const typeDefs = gql`
 // TODO integrate Knex into this for resolving shit
 const resolvers = {
   Query: {
-    users(parent, args, context, resolveInfo) {
-      return knexClient.select('*').from('users')
+    async users(parent, args, context, resolveInfo) {
+      try {
+        const res  = await knexClient.select('*').from('users')
+        return res;
+      } catch (err) {
+        console.log(err)
+      }
     },
   },
 }
 
+
 const apolloServer = new ApolloServer({ typeDefs, resolvers })
 
-export const config = { api: { bodyParser: false }}
+export const config = {
+  api: { bodyParser: false }
+}
 
 export default apolloServer.createHandler({ path: '/api/graphql' })
 
