@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "knex migrate:latest",
+    "db:seed": "knex seed:run",
+    "db:dev": "npm run db:migrate && npm run db:seed",
     "db:rollback": "knex migrate:rollback"
   },
   "dependencies": {

@@ -11,4 +11,11 @@ You will need Node v12+ to run the app as well as a recent version of PostgreSQL
 
 If you have Docker, then you can run `docker-compose up` to run the app locally.
 
+You'll also need to run the migrations for the database so run the below:
+```
+  docker container exec -i $(docker container ls -q -f "ancestor=next-knex-gql_nextjs") bash
+
+  npm run db:dev
+```
+
 If you don't have Docker, then you'll need to make some changes.
