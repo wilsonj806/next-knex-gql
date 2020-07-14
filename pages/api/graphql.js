@@ -1,7 +1,9 @@
 import { ApolloServer, gql } from 'apollo-server-micro'
 import knex from 'knex'
+import Cors from 'micro-cors'
+import DataLoader from 'dataloader'
 
-const knexClient = knex({
+const db = knex({
   client: "postgres",
   connection: {
     host: process.env.POSTGRES_HOST,
@@ -11,13 +13,13 @@ const knexClient = knex({
   }
 });
 
-// knexClient.schema.hasTable('users').then(exists => {
+// db.schema.hasTable('users').then(exists => {
 //   if (!exists) {
-//     knexClient.createTable('users', (table) => {
+//     db.createTable('users', (table) => {
 //       table.increments('id')
 //       table.string('firstName')
 //     })
-//     .then(() => knexClient('users').insert([
+//     .then(() => db('users').insert([
 //       {firstName: 'Wilson'},
 //       {firstName: 'Calvin'}
 //     ]))
@@ -58,14 +60,14 @@ const resolvers = {
   Query: {
     users: (parent, args, context, resolveInfo) => {
       // try {
-        return knexClient.select('*').from('users')
+        return db.select('*').from('users')
       // } catch (err) {
       //   console.log(err)
       // }
     },
     albums: (parent, args, context) => {
       // try {
-        return knexClient
+        return db
         .select('*')
         .from('albums')
         .orderBy('year', 'asc')
@@ -81,7 +83,7 @@ const resolvers = {
     id: (album, args, context) => album.id,
     artist: (album, args, context) => {
       // try {
-      return knexClient
+      return db
         .select('*')
         .from('artists')
         .where({ id: album.artist_id})
@@ -97,7 +99,7 @@ const resolvers = {
     id: (artist, _args, context) => artist.id,
     albums: (artist, args, context) => {
       // try {
-      return knexClient
+      return db
         .select('*')
         .from('albums')
         .where({ artist_id: artist.id })
@@ -112,16 +114,33 @@ const resolvers = {
   }
 }
 
+// Using Loader to avoid N+1 querying since GQL resolves queries serially
+// - i.e resolves one field/ node after another
+const loader = {
+  artist: new DataLoader(ids =>
+    db
+    .select('*')
+    .from('artists')
+    .whereIn('id', ids)
+    .then(rows => ids.map(id => rows.find(row => row.id === id)))
+  )
+}
+
+const cors = Cors({
+  allowMethods: ['GET', 'POST', 'OPTIONS']
+})
 
 const apolloServer = new ApolloServer({
   typeDefs,
   resolvers,
-  context: () => ({})
+  context: () => ({ loader })
 })
 
 export const config = {
   api: { bodyParser: false }
 }
 
-export default apolloServer.createHandler({ path: '/api/graphql' })
+const handler = apolloServer.createHandler({ path: '/api/graphql' })
+
+export default cors(handler)
 
